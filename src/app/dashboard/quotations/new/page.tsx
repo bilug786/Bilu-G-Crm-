@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Trash2, Download, Send, GripVertical } from "lucide-react";
+import { Plus, Trash2, Download, Send, GripVertical, FileText } from "lucide-react";
 import { toast } from "sonner";
 import {
   DndContext,
@@ -24,6 +24,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { generateInvoicePDF, generateVoucherPDF } from "@/lib/pdf/generators";
 
 interface ItineraryDay {
   id: string;
@@ -99,6 +100,8 @@ export default function QuotationBuilder() {
   const [itinerary, setItinerary] = useState<ItineraryDay[]>([
     { id: "1", day: 1, title: "Arrival", description: "Arrive at airport and transfer to hotel." },
   ]);
+  const [destination, setDestination] = useState("Maldives");
+  const [totalAmount, setTotalAmount] = useState(50000);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -140,13 +143,40 @@ export default function QuotationBuilder() {
     toast.success("Quotation saved successfully");
   };
 
+  const handleExportInvoice = () => {
+    generateInvoicePDF({
+      invoiceNumber: "QT-001",
+      amount: totalAmount,
+      taxAmount: totalAmount * 0.05,
+      grandTotal: totalAmount * 1.05,
+      customerName: "John Doe",
+      customerPhone: "+91 9876543210",
+      bookingId: "BK-12345"
+    });
+    toast.success("GST Invoice generated");
+  };
+
+  const handleExportVoucher = () => {
+    generateVoucherPDF({
+      id: "VCH-001",
+      bookingId: "BK-12345",
+      guestName: "John Doe",
+      type: "Package",
+      description: `Tour package for ${destination}`
+    });
+    toast.success("Voucher generated");
+  };
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <h2 className="text-3xl font-bold tracking-tight">Quotation Builder</h2>
         <div className="flex gap-2">
-          <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" /> Export PDF
+          <Button variant="outline" onClick={handleExportInvoice}>
+            <FileText className="mr-2 h-4 w-4" /> GST Invoice
+          </Button>
+          <Button variant="outline" onClick={handleExportVoucher}>
+            <Download className="mr-2 h-4 w-4" /> Voucher
           </Button>
           <Button onClick={handleSave}>Save Quotation</Button>
         </div>
@@ -191,15 +221,24 @@ export default function QuotationBuilder() {
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <Label>Destination</Label>
-                <Input placeholder="e.g. Maldives" />
+                <Input
+                    placeholder="e.g. Maldives"
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Total Amount (₹)</Label>
-                <Input type="number" placeholder="0.00" />
+                <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={totalAmount}
+                    onChange={(e) => setTotalAmount(Number(e.target.value))}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Tax/GST (%)</Label>
-                <Input type="number" defaultValue="5" />
+                <Input type="number" defaultValue="5" readOnly />
               </div>
             </CardContent>
           </Card>

@@ -33,13 +33,17 @@ const statusColors: Record<string, string> = {
 
 interface Lead {
   id: string;
-  name: string;
-  email: string;
-  phone: string;
   status: string;
   source: string;
   destination: string;
   createdAt: string;
+  customer?: {
+    name: string;
+    email: string;
+  };
+  // Handle case where mock or legacy might have name/email at root
+  name?: string;
+  email?: string;
 }
 
 export default function LeadsPage() {
@@ -56,10 +60,12 @@ export default function LeadsPage() {
     fetchLeads();
   }, []);
 
-  const filteredLeads = leads.filter((lead) =>
-    lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    lead.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredLeads = leads.filter((lead) => {
+    const name = lead.customer?.name || lead.name || "";
+    const email = lead.customer?.email || lead.email || "";
+    return name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+           email.toLowerCase().includes(searchTerm.toLowerCase());
+  });
 
   return (
     <div className="space-y-6">
@@ -107,8 +113,8 @@ export default function LeadsPage() {
               filteredLeads.map((lead) => (
                 <TableRow key={lead.id}>
                   <TableCell>
-                    <div className="font-medium">{lead.name}</div>
-                    <div className="text-sm text-muted-foreground">{lead.email}</div>
+                    <div className="font-medium">{lead.customer?.name || lead.name || "N/A"}</div>
+                    <div className="text-sm text-muted-foreground">{lead.customer?.email || lead.email || "N/A"}</div>
                   </TableCell>
                   <TableCell>{lead.destination}</TableCell>
                   <TableCell>

@@ -4,20 +4,28 @@ export const MOCK_LEADS = [
     name: "John Doe",
     email: "john@example.com",
     phone: "+91 9876543210",
-    status: "New",
+    status: "NEW",
     source: "Website",
     destination: "Maldives",
     createdAt: new Date().toISOString(),
+    customer: {
+        name: "John Doe",
+        email: "john@example.com"
+    }
   },
   {
     id: "2",
     name: "Jane Smith",
     email: "jane@example.com",
     phone: "+91 9876543211",
-    status: "Contacted",
+    status: "CONTACTED",
     source: "WhatsApp",
     destination: "Dubai",
     createdAt: new Date().toISOString(),
+    customer: {
+        name: "Jane Smith",
+        email: "jane@example.com"
+    }
   },
 ];
 

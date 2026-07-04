@@ -1,6 +1,6 @@
 "use client";
 
-import { Moon, Sun, Bell, User as UserIcon, LogOut } from "lucide-react";
+import { Moon, Sun, Bell, User as UserIcon, LogOut, Settings } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,5 +83,3 @@ export function Navbar() {
     </header>
   );
 }
-
-import { Settings } from "lucide-react";

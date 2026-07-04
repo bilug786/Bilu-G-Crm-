@@ -1,6 +1,3 @@
-'use client'
-
-import { useState } from 'react'
 import { Plus, Filter, MoreHorizontal, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -21,17 +18,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { getLeads } from '@/lib/actions'
 
-const leads = [
-  { id: 'LD-001', name: 'John Doe', email: 'john@example.com', source: 'Google', status: 'NEW', createdAt: '2023-07-01' },
-  { id: 'LD-002', name: 'Sarah Smith', email: 'sarah@example.com', source: 'WhatsApp', status: 'CONTACTED', createdAt: '2023-07-02' },
-  { id: 'LD-003', name: 'Mike Brown', email: 'mike@example.com', source: 'Referral', status: 'QUALIFIED', createdAt: '2023-07-03' },
-  { id: 'LD-004', name: 'Emma Wilson', email: 'emma@example.com', source: 'Instagram', status: 'WON', createdAt: '2023-07-04' },
-  { id: 'LD-005', name: 'Chris Evans', email: 'chris@example.com', source: 'Facebook', status: 'LOST', createdAt: '2023-07-05' },
-]
+export const dynamic = 'force-dynamic'
 
-export default function LeadsPage() {
-  const [searchTerm, setSearchTerm] = useState('')
+export default async function LeadsPage() {
+  let leads: any[] = []
+  try {
+    leads = await getLeads()
+  } catch (error) {
+    console.error('Failed to fetch leads:', error)
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -62,8 +59,6 @@ export default function LeadsPage() {
           <Input
             placeholder="Search leads..."
             className="pl-10"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
         <Button variant="outline" className="gap-2">
@@ -84,36 +79,42 @@ export default function LeadsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leads.map((lead) => (
-              <TableRow key={lead.id} className="hover:bg-slate-50 transition-colors">
-                <TableCell className="font-medium text-slate-600">{lead.id}</TableCell>
-                <TableCell>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-slate-900">{lead.name}</span>
-                    <span className="text-xs text-slate-500">{lead.email}</span>
-                  </div>
-                </TableCell>
-                <TableCell className="text-slate-600">{lead.source}</TableCell>
-                <TableCell>{getStatusBadge(lead.status)}</TableCell>
-                <TableCell className="text-slate-600">{lead.createdAt}</TableCell>
-                <TableCell>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger >
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-40">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Edit Lead</DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+            {leads.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10 text-slate-500">No leads found</TableCell>
               </TableRow>
-            ))}
+            ) : (
+              leads.map((lead: any) => (
+                <TableRow key={lead.id} className="hover:bg-slate-50 transition-colors">
+                  <TableCell className="font-medium text-slate-600 text-xs truncate max-w-[100px]">{lead.id}</TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-slate-900">{lead.customer?.name || 'N/A'}</span>
+                      <span className="text-xs text-slate-500">{lead.customer?.email}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-slate-600">{lead.source}</TableCell>
+                  <TableCell>{getStatusBadge(lead.status)}</TableCell>
+                  <TableCell className="text-slate-600 text-sm">{new Date(lead.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger >
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem>Edit Lead</DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-red-600">Delete</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

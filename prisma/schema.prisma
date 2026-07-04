@@ -57,13 +57,16 @@ model User {
 }
 
 model Customer {
-  id          String    @id @default(uuid())
-  name        String
-  email       String    @unique
-  phone       String?
-  address     String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id              String    @id @default(uuid())
+  name            String
+  email           String    @unique
+  phone           String?
+  address         String?
+  passportNumber  String?
+  passportExpiry  DateTime?
+  gstNumber       String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   leads       Lead[]
   bookings    Booking[]
@@ -79,6 +82,7 @@ model Lead {
   source        String?
   status        LeadStatus  @default(NEW)
   notes         String?
+  followUpDate  DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -111,11 +115,14 @@ model TourPackage {
   category      PackageCategory @relation(fields: [categoryId], references: [id])
   destinationId String
   destination   Destination @relation(fields: [destinationId], references: [id])
+  duration      String?   // e.g. "5 Days / 4 Nights"
   highlights    String?
   inclusions    String?
   exclusions    String?
   terms         String?
   basePrice     Decimal   @db.Decimal(10, 2)
+  images        String[]  @default([])
+  isPublished   Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
@@ -150,9 +157,13 @@ model Booking {
   status        BookingStatus @default(PENDING)
   paymentStatus PaymentStatus @default(UNPAID)
   totalAmount   Decimal       @db.Decimal(10, 2)
+  paidAmount    Decimal       @db.Decimal(10, 2) @default(0)
+  balanceAmount Decimal       @db.Decimal(10, 2) @default(0)
   bookingDate   DateTime      @default(now())
   tourStartDate DateTime
   tourEndDate   DateTime
+  numPax        Int           @default(1)
+  voucherNumber String?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -172,14 +183,16 @@ model Payment {
 }
 
 model Hotel {
-  id          String    @id @default(uuid())
-  name        String
-  categoryId  String
-  category    HotelCategory @relation(fields: [categoryId], references: [id])
-  address     String?
-  phone       String?
-  email       String?
-  createdAt   DateTime  @default(now())
+  id            String    @id @default(uuid())
+  name          String
+  categoryId    String
+  category      HotelCategory @relation(fields: [categoryId], references: [id])
+  city          String?
+  address       String?
+  contactPerson String?
+  phone         String?
+  email         String?
+  createdAt     DateTime  @default(now())
 
   rooms       HotelRoom[]
 }
@@ -215,6 +228,8 @@ model Vehicle {
   capacity      Int
   ownerSupplier String?
   baseRate      Decimal  @db.Decimal(10, 2)
+  driverName    String?
+  driverPhone   String?
 }
 
 model Driver {
@@ -349,7 +364,7 @@ model Testimonial {
   customerId  String
   customer    Customer  @relation(fields: [customerId], references: [id])
   content     String
-  createdAt   DateTime  @default(now())
+  createdAt   DateTime    @default(now())
 }
 
 model CompanySetting {

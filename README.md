@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Travel CRM SaaS
+
+A complete production-ready Travel CRM SaaS built with Next.js 15, React, TypeScript, Tailwind CSS, Supabase, Prisma, and shadcn/ui.
+
+## Features
+
+- **Dashboard**: Modern analytics with Recharts.
+- **Lead Management**: Track and manage potential customers.
+- **Customer CRM**: Comprehensive customer database.
+- **Enquiry Management**: Manage customer trip enquiries.
+- **Quotation Builder**: Create professional quotes with a dynamic itinerary editor.
+- **Booking Management**: Track confirmed bookings and payments.
+- **Voucher & Invoice**: Generate professional PDFs for vouchers and GST invoices.
+- **Supplier & Expense**: Track supplier details and booking-related expenses.
+- **Dark/Light Mode**: Fully responsive design with theme support.
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Styling**: Tailwind CSS v4, shadcn/ui
+- **Database**: PostgreSQL (via Supabase)
+- **ORM**: Prisma
+- **Auth**: Supabase Auth
+- **PDF**: jsPDF
+- **Charts**: Recharts
 
 ## Getting Started
 
-First, run the development server:
+### 1. Clone the repository
+
+```bash
+git clone <repo-url>
+cd Bilu-G-Crm-
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Setup Supabase (Optional for first run)
+
+The application is designed to run with mock data if Supabase is not yet configured. To connect your own Supabase project:
+
+1. Create a project at [supabase.com](https://supabase.com).
+2. Copy your Project URL and Anon Key.
+3. Create a `.env` file in the root directory:
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=your-project-url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+DATABASE_URL=your-postgresql-connection-string
+```
+
+### 4. Setup Prisma
+
+Once your `DATABASE_URL` is configured in `.env`:
+
+```bash
+npx prisma generate
+npx prisma db push
+```
+
+### 5. Run the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deployment on Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This project is ready to be deployed on Vercel.
 
-## Learn More
+- It will build successfully even without Supabase environment variables.
+- Authentication will be bypassed if environment variables are missing.
+- To enable full functionality after deployment, add the Supabase and Prisma environment variables in the Vercel project settings and re-deploy.
 
-To learn more about Next.js, take a look at the following resources:
+## License
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT

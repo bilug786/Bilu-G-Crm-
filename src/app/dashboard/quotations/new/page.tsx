@@ -7,6 +7,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Plus, Trash2, Download, Send, GripVertical } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 interface ItineraryDay {
   id: string;
@@ -15,10 +32,93 @@ interface ItineraryDay {
   description: string;
 }
 
+interface SortableItemProps {
+  day: ItineraryDay;
+  onRemove: (id: string) => void;
+  onUpdate: (id: string, field: keyof ItineraryDay, value: string) => void;
+}
+
+function SortableDay({ day, onRemove, onUpdate }: SortableItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: day.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="p-4 border rounded-lg space-y-3 bg-card relative group mb-4"
+    >
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div {...attributes} {...listeners} className="cursor-grab p-1">
+            <GripVertical className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <span className="font-bold text-lg">Day {day.day}</span>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={() => onRemove(day.id)}
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+      <div className="space-y-2">
+        <Label>Title</Label>
+        <Input
+          placeholder="e.g. Arrival & City Tour"
+          value={day.title}
+          onChange={(e) => onUpdate(day.id, "title", e.target.value)}
+        />
+      </div>
+      <div className="space-y-2">
+        <Label>Description</Label>
+        <textarea
+          className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          placeholder="Describe activities for the day..."
+          value={day.description}
+          onChange={(e) => onUpdate(day.id, "description", e.target.value)}
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function QuotationBuilder() {
   const [itinerary, setItinerary] = useState<ItineraryDay[]>([
     { id: "1", day: 1, title: "Arrival", description: "Arrive at airport and transfer to hotel." },
   ]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (over && active.id !== over.id) {
+      setItinerary((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        const newArray = arrayMove(items, oldIndex, newIndex);
+        return newArray.map((item, idx) => ({ ...item, day: idx + 1 }));
+      });
+    }
+  };
 
   const addDay = () => {
     const nextDay = itinerary.length + 1;
@@ -58,42 +158,26 @@ export default function QuotationBuilder() {
             <CardTitle>Itinerary Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {itinerary.map((day) => (
-              <div key={day.id} className="p-4 border rounded-lg space-y-3 bg-muted/20 relative group">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <GripVertical className="h-4 w-4 text-muted-foreground cursor-grab" />
-                    <span className="font-bold text-lg">Day {day.day}</span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                    onClick={() => removeDay(day.id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="space-y-2">
-                  <Label>Title</Label>
-                  <Input
-                    placeholder="e.g. Arrival & City Tour"
-                    value={day.title}
-                    onChange={(e) => updateDay(day.id, "title", e.target.value)}
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={itinerary.map((d) => d.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {itinerary.map((day) => (
+                  <SortableDay
+                    key={day.id}
+                    day={day}
+                    onRemove={removeDay}
+                    onUpdate={updateDay}
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label>Description</Label>
-                  <textarea
-                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    placeholder="Describe activities for the day..."
-                    value={day.description}
-                    onChange={(e) => updateDay(day.id, "description", e.target.value)}
-                  />
-                </div>
-              </div>
-            ))}
-            <Button variant="outline" className="w-full border-dashed" onClick={addDay}>
+                ))}
+              </SortableContext>
+            </DndContext>
+            <Button variant="outline" className="w-full border-dashed mt-4" onClick={addDay}>
               <Plus className="mr-2 h-4 w-4" /> Add Day
             </Button>
           </CardContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -20,30 +20,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-const leads = [
-  {
-    id: "1",
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+91 9876543210",
-    status: "NEW",
-    source: "Website",
-    destination: "Maldives",
-    createdAt: "2023-10-25",
-  },
-  {
-    id: "2",
-    name: "Jane Smith",
-    email: "jane@example.com",
-    phone: "+91 9876543211",
-    status: "PROPOSAL_SENT",
-    source: "WhatsApp",
-    destination: "Bali",
-    createdAt: "2023-10-24",
-  },
-  // Add more mock data as needed
-];
+import { leadService } from "@/services/leads";
 
 const statusColors: Record<string, string> = {
   NEW: "bg-blue-500",
@@ -54,8 +31,35 @@ const statusColors: Record<string, string> = {
   LOST: "bg-red-500",
 };
 
+interface Lead {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  status: string;
+  source: string;
+  destination: string;
+  createdAt: string;
+}
+
 export default function LeadsPage() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchLeads() {
+      const data = await leadService.getLeads();
+      if (data) setLeads(data as Lead[]);
+      setLoading(false);
+    }
+    fetchLeads();
+  }, []);
+
+  const filteredLeads = leads.filter((lead) =>
+    lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lead.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
     <div className="space-y-6">
@@ -91,37 +95,47 @@ export default function LeadsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {leads.map((lead) => (
-              <TableRow key={lead.id}>
-                <TableCell>
-                  <div className="font-medium">{lead.name}</div>
-                  <div className="text-sm text-muted-foreground">{lead.email}</div>
-                </TableCell>
-                <TableCell>{lead.destination}</TableCell>
-                <TableCell>
-                  <Badge className={statusColors[lead.status]}>
-                    {lead.status.replace("_", " ")}
-                  </Badge>
-                </TableCell>
-                <TableCell>{lead.source}</TableCell>
-                <TableCell>{lead.createdAt}</TableCell>
-                <TableCell className="text-right">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Edit Lead</DropdownMenuItem>
-                      <DropdownMenuItem>Create Enquiry</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10">Loading leads...</TableCell>
               </TableRow>
-            ))}
+            ) : filteredLeads.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-10">No leads found.</TableCell>
+              </TableRow>
+            ) : (
+              filteredLeads.map((lead) => (
+                <TableRow key={lead.id}>
+                  <TableCell>
+                    <div className="font-medium">{lead.name}</div>
+                    <div className="text-sm text-muted-foreground">{lead.email}</div>
+                  </TableCell>
+                  <TableCell>{lead.destination}</TableCell>
+                  <TableCell>
+                    <Badge className={statusColors[lead.status] || "bg-gray-500"}>
+                      {(lead.status || "NEW").replace("_", " ")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{lead.source}</TableCell>
+                  <TableCell>{new Date(lead.createdAt).toLocaleDateString()}</TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger>
+                        <Button variant="ghost" size="icon">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                        <DropdownMenuItem>View Details</DropdownMenuItem>
+                        <DropdownMenuItem>Edit Lead</DropdownMenuItem>
+                        <DropdownMenuItem>Create Enquiry</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>

@@ -1,22 +1,36 @@
-import { createMiddlewareClient } from "@supabase/auth-helpers-nextjs";
+import { createServerClient } from "@supabase/auth-helpers-nextjs";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
-  // If Supabase env vars are missing, skip auth logic (for development/demo)
-  if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+  // If Supabase environment variables are missing, bypass authentication
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseAnonKey) {
+    console.log("Middleware: Supabase env vars missing, bypassing auth");
     return res;
   }
 
   try {
-    const supabase = createMiddlewareClient({ req, res });
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        getAll() {
+          return req.cookies.getAll().map(({ name, value }) => ({ name, value }));
+        },
+        setAll(cookiesToSet) {
+          cookiesToSet.forEach(({ name, value }) => req.cookies.set(name, value));
+          cookiesToSet.forEach(({ name, value }) => res.cookies.set(name, value));
+        },
+      },
+    });
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
 
-    // If user is not signed in and the current path is not /login or /signup, redirect the user to /login
     const isAuthPage = req.nextUrl.pathname.startsWith("/login") || req.nextUrl.pathname.startsWith("/signup");
     const isPublicPage = req.nextUrl.pathname === "/";
 
@@ -24,12 +38,11 @@ export async function middleware(req: NextRequest) {
       return NextResponse.redirect(new URL("/login", req.url));
     }
 
-    // If user is signed in and the current path is /login or /signup, redirect the user to /dashboard
     if (session && isAuthPage) {
       return NextResponse.redirect(new URL("/dashboard", req.url));
     }
-  } catch (e) {
-    console.error("Middleware error:", e);
+  } catch (error) {
+    console.error("Middleware Auth Error:", error);
   }
 
   return res;

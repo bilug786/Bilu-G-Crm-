@@ -1,5 +1,3 @@
-'use client'
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   TrendingUp,
@@ -9,103 +7,92 @@ import {
   ArrowUpRight,
   ArrowDownRight
 } from "lucide-react"
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  LineChart,
-  Line
-} from 'recharts'
+import { getDashboardStats, getBookings } from "@/lib/actions"
+import { DashboardCharts } from "@/components/dashboard/dashboard-charts"
 
-const data = [
-  { name: 'Jan', revenue: 4000, bookings: 24 },
-  { name: 'Feb', revenue: 3000, bookings: 18 },
-  { name: 'Mar', revenue: 2000, bookings: 12 },
-  { name: 'Apr', revenue: 2780, bookings: 20 },
-  { name: 'May', revenue: 1890, bookings: 15 },
-  { name: 'Jun', revenue: 2390, bookings: 17 },
-  { name: 'Jul', revenue: 3490, bookings: 22 },
-]
+export const dynamic = 'force-dynamic'
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const stats = await getDashboardStats()
+  const recentBookings = await getBookings()
+
+  const chartData = [
+    { name: 'Jan', revenue: stats.revenue * 0.1, bookings: Math.floor(stats.bookings * 0.1) },
+    { name: 'Feb', revenue: stats.revenue * 0.15, bookings: Math.floor(stats.bookings * 0.15) },
+    { name: 'Mar', revenue: stats.revenue * 0.2, bookings: Math.floor(stats.bookings * 0.2) },
+    { name: 'Apr', revenue: stats.revenue * 0.1, bookings: Math.floor(stats.bookings * 0.1) },
+    { name: 'May', revenue: stats.revenue * 0.15, bookings: Math.floor(stats.bookings * 0.15) },
+    { name: 'Jun', revenue: stats.revenue * 0.1, bookings: Math.floor(stats.bookings * 0.1) },
+    { name: 'Jul', revenue: stats.revenue * 0.2, bookings: Math.floor(stats.bookings * 0.2) },
+  ]
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-900">Dashboard Overview</h1>
-        <p className="text-slate-500">Welcome back, Bilu G</p>
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900">Dashboard Overview</h1>
+          <p className="text-slate-500 text-sm">Real-time statistics and insights</p>
+        </div>
+        <p className="text-slate-500 font-medium">Welcome back, Admin</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
           title="Total Revenue"
-          value="$45,231.89"
-          change="+20.1%"
+          value={`$${stats.revenue.toLocaleString()}`}
+          change="+0%"
           trend="up"
           icon={TrendingUp}
         />
         <StatsCard
-          title="Active Leads"
-          value="124"
-          change="+12.5%"
+          title="Total Leads"
+          value={stats.leads.toString()}
+          change="+0%"
           trend="up"
           icon={Briefcase}
         />
         <StatsCard
           title="Total Bookings"
-          value="45"
-          change="-4.1%"
-          trend="down"
+          value={stats.bookings.toString()}
+          change="+0%"
+          trend="up"
           icon={Calendar}
         />
         <StatsCard
-          title="Active Customers"
-          value="2,350"
-          change="+10.1%"
+          title="Total Customers"
+          value={stats.customers.toString()}
+          change="+0%"
           trend="up"
           icon={Users}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Revenue Overview</CardTitle>
-          </CardHeader>
-          <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <Tooltip
-                  contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                />
-                <Bar dataKey="revenue" fill="#2563eb" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
+        <DashboardCharts data={chartData} />
 
         <Card className="shadow-sm">
-          <CardHeader>
-            <CardTitle>Bookings Trend</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle>Recent Bookings</CardTitle>
           </CardHeader>
-          <CardContent className="h-80">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                <Tooltip
-                   contentStyle={{borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                />
-                <Line type="monotone" dataKey="bookings" stroke="#10b981" strokeWidth={2} dot={{ r: 4, fill: '#10b981' }} />
-              </LineChart>
-            </ResponsiveContainer>
+          <CardContent>
+             <div className="space-y-4">
+               {recentBookings.length === 0 ? (
+                 <p className="text-center py-10 text-slate-400">No bookings yet</p>
+               ) : (
+                 recentBookings.slice(0, 5).map((booking) => (
+                   <div key={booking.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                     <div className="flex flex-col">
+                       <span className="text-sm font-semibold text-slate-900">{booking.customer.name}</span>
+                       <span className="text-xs text-slate-500">{booking.package.name}</span>
+                     </div>
+                     <div className="text-right">
+                       <span className="text-sm font-bold text-blue-600">${Number(booking.totalAmount).toLocaleString()}</span>
+                       <p className="text-[10px] text-slate-400">{new Date(booking.createdAt).toLocaleDateString()}</p>
+                     </div>
+                   </div>
+                 ))
+               )}
+             </div>
           </CardContent>
         </Card>
       </div>

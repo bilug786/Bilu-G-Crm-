@@ -1,100 +1,148 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, GripVertical, Trash2, Image as ImageIcon, MapPin, Coffee, Car } from 'lucide-react'
+import { Plus, Trash2, Download, Package, MapPin, Hotel, Truck, Utensils } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
-import { Card, CardContent } from '@/components/ui/card'
-
-interface Day {
-  id: string
-  title: string
-  description: string
-  activities: string[]
-}
+import { toast } from "sonner"
 
 export default function ItineraryBuilderPage() {
-  const [days, setDays] = useState<Day[]>([
-    { id: '1', title: 'Arrival in Srinagar', description: 'Welcome to the city of lakes!', activities: ['Airport pickup', 'Shikara ride'] }
+  const [days, setDays] = useState([
+    { id: 1, title: 'Arrival & Check-in', activities: 'Arrival at airport and transfer to hotel.', meals: 'Dinner', hotel: 'Grand Hotel', transport: 'Private Cab' }
   ])
 
   const addDay = () => {
-    const newDay: Day = {
-      id: (days.length + 1).toString(),
-      title: `Day ${days.length + 1}`,
-      description: '',
-      activities: []
-    }
-    setDays([...days, newDay])
+    setDays([...days, {
+      id: days.length + 1,
+      title: '',
+      activities: '',
+      meals: '',
+      hotel: '',
+      transport: ''
+    }])
   }
 
-  const removeDay = (id: string) => {
-    setDays(days.filter(day => day.id !== id))
+  const removeDay = (index: number) => {
+    const newDays = [...days]
+    newDays.splice(index, 1)
+    setDays(newDays)
+  }
+
+  const updateDay = (index: number, field: string, value: string) => {
+    const newDays = [...days]
+    newDays[index] = { ...newDays[index], [field]: value }
+    setDays(newDays)
   }
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
+    <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Itinerary Builder</h1>
-          <p className="text-slate-500 text-sm">Design day-wise travel plans</p>
+          <p className="text-slate-500 text-sm">Create detailed day-wise travel plans</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline">Preview PDF</Button>
-          <Button className="bg-blue-600 hover:bg-blue-700">Save Itinerary</Button>
-        </div>
+        <Button className="bg-blue-600 hover:bg-blue-700 gap-2">
+          <Download className="h-4 w-4" /> Export Professional PDF
+        </Button>
       </div>
 
-      <div className="space-y-4">
-        {days.map((day, index) => (
-          <Card key={day.id} className="relative group">
-            <CardContent className="p-6">
-              <div className="flex gap-4">
-                <div className="flex flex-col items-center">
-                  <div className="h-10 w-10 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold">
-                    {index + 1}
-                  </div>
-                  <div className="flex-1 w-0.5 bg-slate-200 my-2"></div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-4">
+          {days.map((day, index) => (
+            <Card key={index} className="shadow-sm border-slate-200">
+              <CardHeader className="flex flex-row items-center justify-between bg-slate-50/50">
+                <CardTitle className="text-sm font-bold text-slate-700">Day {index + 1}</CardTitle>
+                <Button variant="ghost" size="icon" onClick={() => removeDay(index)} className="text-red-500">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </CardHeader>
+              <CardContent className="p-4 space-y-4">
+                <div className="space-y-2">
+                   <label className="text-xs font-bold text-slate-500 uppercase">Day Title</label>
+                   <Input
+                     value={day.title}
+                     onChange={(e) => updateDay(index, 'title', e.target.value)}
+                     placeholder="e.g. Exploring Old City"
+                   />
                 </div>
-                <div className="flex-1 space-y-4">
-                  <div className="flex items-center justify-between">
+                <div className="space-y-2">
+                   <label className="text-xs font-bold text-slate-500 uppercase">Activities</label>
+                   <Textarea
+                     value={day.activities}
+                     onChange={(e) => updateDay(index, 'activities', e.target.value)}
+                     placeholder="Detailed description of the day's plan..."
+                   />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1 text-xs font-bold text-slate-500 uppercase">
+                      <Utensils className="h-3 w-3" /> Meals
+                    </div>
                     <Input
-                      className="text-lg font-bold border-none px-0 focus-visible:ring-0 h-auto"
-                      placeholder="Enter day title (e.g., Arrival in Srinagar)"
-                      defaultValue={day.title}
+                      value={day.meals}
+                      onChange={(e) => updateDay(index, 'meals', e.target.value)}
+                      placeholder="B, L, D"
                     />
-                    <Button variant="ghost" size="icon" className="text-slate-400 hover:text-red-600" onClick={() => removeDay(day.id)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
-                  <Textarea
-                    placeholder="Describe the day's highlights..."
-                    className="resize-none border-slate-200 focus:border-blue-400"
-                    defaultValue={day.description}
-                  />
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" className="gap-2 text-xs"><MapPin className="h-3 w-3" /> Add Sightseeing</Button>
-                    <Button variant="outline" size="sm" className="gap-2 text-xs"><Coffee className="h-3 w-3" /> Add Meals</Button>
-                    <Button variant="outline" size="sm" className="gap-2 text-xs"><Car className="h-3 w-3" /> Add Transfer</Button>
-                    <Button variant="outline" size="sm" className="gap-2 text-xs"><ImageIcon className="h-3 w-3" /> Add Image</Button>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1 text-xs font-bold text-slate-500 uppercase">
+                      <Hotel className="h-3 w-3" /> Hotel
+                    </div>
+                    <Input
+                      value={day.hotel}
+                      onChange={(e) => updateDay(index, 'hotel', e.target.value)}
+                      placeholder="Hotel name"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-1 text-xs font-bold text-slate-500 uppercase">
+                      <Truck className="h-3 w-3" /> Transport
+                    </div>
+                    <Input
+                      value={day.transport}
+                      onChange={(e) => updateDay(index, 'transport', e.target.value)}
+                      placeholder="Vehicle type"
+                    />
                   </div>
                 </div>
-              </div>
-            </CardContent>
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -ml-3 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab">
-              <GripVertical className="text-slate-300" />
-            </div>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))}
+          <Button variant="outline" className="w-full border-dashed border-2 py-8" onClick={addDay}>
+            <Plus className="h-4 w-4 mr-2" /> Add Next Day
+          </Button>
+        </div>
 
-        <Button
-          variant="outline"
-          className="w-full border-dashed border-2 py-8 text-slate-500 hover:text-blue-600 hover:border-blue-200 hover:bg-blue-50 transition-all gap-2"
-          onClick={addDay}
-        >
-          <Plus className="h-5 w-5" /> Add Another Day
-        </Button>
+        <div className="space-y-6">
+          <Card className="shadow-sm">
+            <CardHeader>
+               <CardTitle className="text-lg">Package Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+               <div className="space-y-2">
+                 <label className="text-sm font-medium">Select Package</label>
+                 <Input placeholder="Search packages..." />
+               </div>
+               <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                  <div className="flex items-center gap-2 text-blue-700 font-bold mb-1">
+                    <Package className="h-4 w-4" /> Selected: Kashmir Delight
+                  </div>
+                  <p className="text-xs text-blue-600">5 Days / 4 Nights | Starts from $450</p>
+               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-sm bg-slate-900 text-white">
+            <CardContent className="p-6">
+               <h3 className="font-bold text-lg mb-2">Pro Tip</h3>
+               <p className="text-sm text-slate-300">
+                 Be specific with activity timings and meeting points to provide a premium experience to your travelers.
+               </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )
